@@ -6,9 +6,11 @@ package hudson.plugins.disk_usage;
 
 import hudson.Extension;
 import hudson.model.PeriodicWork;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
 import jenkins.model.Jenkins;
 
 /**
@@ -18,9 +20,11 @@ import jenkins.model.Jenkins;
 @Extension
 public class DiskUsageOvearallGraphGenerator extends PeriodicWork {
 
+    private transient static long period = PeriodicWork.DAY * 30;
+
 	@Override
 	public long getRecurrencePeriod() {
-		return PeriodicWork.DAY;
+		return period;
 	}
 
 	@Override
@@ -29,18 +33,18 @@ public class DiskUsageOvearallGraphGenerator extends PeriodicWork {
             plugin.refreshGlobalInformation();
             File jobsDir = new File(Jenkins.getInstance().getRootDir(), "jobs");
             Long freeJobsDirSpace = jobsDir.getTotalSpace();
-            
+
             DiskUsageProjectActionFactory.DESCRIPTOR.addHistory(new DiskUsageOvearallGraphGenerator.DiskUsageRecord(plugin.getCashedGlobalBuildsDiskUsage(), plugin.getGlobalSlaveDiskUsageWorkspace(), plugin.getCashedGlobalJobsWithoutBuildsDiskUsage(), freeJobsDirSpace, plugin.getCashedNonSlaveDiskUsageWorkspace()));
             DiskUsageProjectActionFactory.DESCRIPTOR.save();
 	}
-        
+
         public static class DiskUsageRecord extends DiskUsage{
 		private static SimpleDateFormat sdf = new SimpleDateFormat("d/M");
 		Date date;
                 private Long jobsWithoutBuildsUsage = 0l;
                 private Long allSpace = 0l;
                 private Long diskUsageNonSlaveWorkspaces = 0l;
-                
+
 
 		public DiskUsageRecord(Long diskUsageBuilds, Long diskUsageWorkspaces, Long diskUsageJobsWithoutBuilds, Long allSpace, Long diskUsageNonSlaveWorkspaces){
                         super(diskUsageBuilds, diskUsageWorkspaces);
@@ -55,37 +59,37 @@ public class DiskUsageOvearallGraphGenerator extends PeriodicWork {
 				}
 			};
 		}
-                
+
                 public Long getNonSlaveWorkspacesUsage(){
                     if(diskUsageNonSlaveWorkspaces==null)
                         return 0l;
                     return diskUsageNonSlaveWorkspaces;
                 }
-    
+
                 public Long getSlaveWorkspacesUsage(){
                     if(diskUsageNonSlaveWorkspaces==null)
                         return getWorkspacesDiskUsage();
                     return getWorkspacesDiskUsage() - diskUsageNonSlaveWorkspaces;
                 }
-                
+
                 public Long getBuildsDiskUsage(){
                     if(buildUsage==null)
                         return 0l;
                     return buildUsage;
                 }
-                
+
                 public Long getJobsDiskUsage(){
                     if(jobsWithoutBuildsUsage==null)
                         return getBuildsDiskUsage();
                     return (jobsWithoutBuildsUsage + getBuildsDiskUsage());
                 }
-                
+
                 public Long getAllSpace(){
                     if(allSpace==null)
                         return 0l;
                     return allSpace;
                 }
-                
+
                 public Long getWorkspacesDiskUsage(){
                     if(wsUsage==null)
                         return 0l;
@@ -96,6 +100,6 @@ public class DiskUsageOvearallGraphGenerator extends PeriodicWork {
                     return date;
 		}
 	}
-    
+
 
 }
